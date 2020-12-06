@@ -1,0 +1,175 @@
+<project name="TicTacToe" default="release" basedir=".">
+
+	<!--  SET COMPILER AND JAVA SOURCE COMPATIBILITY -->
+	<property name="source" value="1.8" />
+	<property name="compiler" value="javac1.8" />
+	
+	<!--  SET SOURCE, BUILD AND RELEASE DIR -->
+ 	<property name="source.dir" value="src" />
+	<property name="testsource.dir" value="test" />
+	<property name="build.dir" value="bin" />
+	<property name="release.dir" value="release" />
+	<property name="lib.dir" value="lib" />
+	<property name="report.dir" value="generated-reports" />
+	
+	<!-- SET APPLICATION NAME -->
+	<property name="appname" value="TicTacToe" />
+	<property name="mainclass" value="ui.TicTacToe" />
+	
+	<target name="prepareRelease">
+	</target>
+	
+	<target name="prepareBuild">
+	</target>
+	
+	<path id="project.classpath">
+		<fileset dir="${lib.dir}" includes="**/*.jar" />
+	</path>
+	
+	<!-- CLEANING DIRECTORIES -->
+	<target name="clean">
+		
+		<echo message="deleting build dir: ${build.dir}" />
+		<delete dir="${build.dir}" />
+		
+		<echo message="deleting release dir: ${release.dir}" />
+		<delete dir="${release.dir}" />
+		
+	</target>
+	
+	<!-- PREPARING DESTINATION DIRECTORIES -->
+	<target name="prepare">
+	
+		<echo message="creating build dir: ${build.dir}" />
+		<mkdir dir="${build.dir}" />
+		
+		<echo message="creating release dir: ${release.dir}" />
+		<mkdir dir="${release.dir}" />
+		
+	</target>
+	
+	<!-- COMPILE ALL SOURCES (AND TESTS) -->
+	<target name="compile" depends="prepare">
+		
+		<echo message="compile" />
+		<antcall target="-compileSrc" />
+		
+		<available file="${testsource.dir}" type="dir" property="testsource.dir.present" />
+		<antcall target="-compileTests" />
+		
+	</target>
+	
+	<!--  COMPILE SRC -->
+	<target name="-compileSrc">
+	
+		<echo message="compiling ${source.dir}" />
+		
+		<javac srcdir="${source.dir}" destdir="${build.dir}" source="${source}" compiler="${compiler}" debug="true" encoding="ISO-8859-1" includeantruntime="false">
+			<classpath>
+				<path refid="project.classpath" />
+			</classpath>
+		</javac>
+	
+	</target>
+	
+	<!--  COMPILE TESTS -->
+	<target name="-compileTests" if="testsource.dir.present">
+	
+		<echo message="compiling ${testsource.dir}" />
+		
+		<javac srcdir="${testsource.dir}" destdir="${build.dir}" source="${source}" compiler="${compiler}" debug="true" encoding="ISO-8859-1" includeantruntime="false">
+			<classpath>
+				<path refid="project.classpath" />
+			</classpath>
+		</javac>
+	
+	</target>
+	
+	<!-- EXECUTE TESTS -->
+	<target name="executeTests" depends="compile" if="testsource.dir.present">
+	
+		<echo message="preparing junit-reports dir: ${report.dir}/junit" />
+		<delete dir="${report.dir}/junit" />
+		<mkdir dir="${report.dir}/junit" />
+		
+		<junit printsummary="on" fork="true" haltonfailure="false" failureproperty="tests.failed" filtertrace="yes" showoutput="true">
+		
+			<classpath>
+				<pathelement location="${build.dir}" />
+				<path refid="project.classpath" />
+			</classpath>
+			
+			<formatter type="brief" usefile="true" />
+			<formatter type="xml" usefile="true" />
+			
+			<batchtest todir="${report.dir}/junit">
+				<fileset dir="${testsource.dir}">
+					<include name="**/*Test.java" />
+				</fileset>
+			</batchtest>
+								
+		</junit>
+		
+		<junitreport todir="${report.dir}/junit">
+			
+			<fileset dir="${report.dir}/junit">
+				<include name="TEST-*.xml" />
+			</fileset>
+			
+			<report format="frames" todir="${report.dir}/junit" />
+			
+		</junitreport>
+		
+		<!-- 
+		<fail if="test.failed">
+		</fail>
+		--> 
+
+	</target>
+		 
+	<!-- Starte die Applikation aus den kompilierten Klassen -->
+	<target name="start.compiled" depends="compile, prepareBuild">
+	 
+		<echo message="starting application ${appname} in dir ${basedir}" />
+	 	
+	 	<java classname="${mainclass}" fork="true">
+	 	
+	 		<classpath>
+	 			<pathelement location="." />
+	 			<pathelement location="${build.dir}" />
+	 			<pathelement refid="project.classpath" />
+	 		</classpath>
+	 		
+	 	</java>
+	 
+	</target>
+	 
+	<!--  CREATING NEW RELEASE -->
+	<target name="release" depends="executeTests, compile, prepareRelease">
+	 
+		<!--  create jar file -->
+	 	<jar destfile="${release.dir}/${appname}.jar">
+	 		
+	 		<fileset dir="${build.dir}" excludes="**/Test*.class, **/*Test.class" />
+	 		
+	 		<manifest>
+	 			<attribute name="Main-Class" value="${mainclass}" />
+	 		</manifest>
+	 		
+	 	</jar>
+	 	
+	 	<!-- copy lib dir to release lib dir -->
+	 	<copy todir="${release.dir}/${lib.dir}">
+	 		<fileset dir="${lib.dir}" />
+	 	</copy>
+	 	
+	 	<!-- copy properties and xml-files to release dir -->
+	 	<copy todir="${release.dir}">
+	 		<fileset dir="${basedir}" includes="*.properties, *.xml" excludes="build.xml" />
+	 	</copy>
+	 	
+	 	<echo message="release ${appname}.jar created" />
+	 
+	</target>
+
+</project>
