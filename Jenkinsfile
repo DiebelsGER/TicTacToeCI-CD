@@ -26,8 +26,8 @@ pipeline {
 
     stage('3. Build with Ant') {
       steps {
-        withAnt(installation: 'ANT_HOME', jdk: 'JAVA_HOME')
-      }
+        bat 'call ant -f build.xml'
+    }
     }
 
   }
