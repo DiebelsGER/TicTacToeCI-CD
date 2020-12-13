@@ -26,7 +26,7 @@ pipeline {
 
     stage('3. Build with Ant') {
       steps {
-        withAnt(installation: 'C:\\Program Files\\Java\\apache-ant-1.9.15')
+        withAnt(installation: 'ANT_HOME', jdk: 'JAVA_HOME')
       }
     }
 
